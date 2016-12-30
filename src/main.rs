@@ -90,8 +90,8 @@ fn colour_parse(string: &str) -> image::Rgb<u8> {
 fn main() {
     let mut height = 768;
     let mut width = 1366;
-    let mut background = String::from("#000000FF");
-    let mut colours = String::from("#FFFFFFFF,#FF0000FF,#00FF00FF,#0000FFFF");
+    let mut background = String::from("#000000");
+    let mut colours = String::from("#FFFFFF,#FF0000,#00FF00,#0000FF");
     let mut shape_type = String::from("Circle");
     let mut shape_count = 10;
     let mut out = String::new();
