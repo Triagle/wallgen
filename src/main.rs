@@ -5,7 +5,7 @@ extern crate rand;
 use std::fs::File;
 use std::path::Path;
 use rand::Rng;
-use argparse::{ArgumentParser, Store};
+use argparse::{ArgumentParser, Store, StoreTrue};
 
 // Shapes to draw
 trait Drawable {
@@ -94,6 +94,11 @@ fn main() {
     let mut colours = String::from("#FFFFFF,#FF0000,#00FF00,#0000FF");
     let mut shape_type = String::from("Circle");
     let mut shape_count = 10;
+    let mut bars = 5;
+    let mut vertical_bars = false;
+    let mut max_radius = 250;
+    let mut max_length = 250;
+    let mut max_height = 250;
     let mut out = String::new();
     {
         let mut ap = ArgumentParser::new();
@@ -107,9 +112,19 @@ fn main() {
         ap.refer(&mut colours)
             .add_option(&["-c", "--colours"], Store, "Set the image colours (comma separated #RRGGBB values).");
         ap.refer(&mut shape_count)
-            .add_option(&["-n", "--num-shapes"], Store, "Set the number of shapes generated.");
+            .add_option(&["-n", "--num-shapes"], Store, "Set the number of shapes generated (if Circles or Rectangles is selected).");
+        ap.refer(&mut bars)
+            .add_option(&["--bars"], Store, "Set the number of bars (if Bars style is selected)");
+        ap.refer(&mut vertical_bars)
+            .add_option(&["--vertical-bars"], StoreTrue, "Set the number of bars (if Bars style is selected)");
         ap.refer(&mut shape_type)
-            .add_option(&["-s", "--shape-type"], Store, "Set the type of shapes generated (Circle, Rectangle). Default is Circle.");
+            .add_option(&["-s", "--style"], Store, "Set the style of wallpaper (Circles, Rectangles). Default is Circles.");
+        ap.refer(&mut max_radius)
+            .add_option(&["-r", "--radius"], Store, "Set the maximum radius of the circles (if Circles style is selected)");
+        ap.refer(&mut max_length)
+            .add_option(&["--rl", "--rect-length"], Store, "Set the maximum length of the rectangles (if Rectangles style is selected)");
+        ap.refer(&mut max_height)
+            .add_option(&["--rh", "--rect-height"], Store, "Set the maximum height of the rectangles (if Rectangles style is selected)");
         ap.refer(&mut out)
             .add_option(&["-o", "--out"], Store, "Set the output file for the wallpaper");
         ap.parse_args_or_exit();
@@ -122,26 +137,53 @@ fn main() {
 
     let mut rng = rand::thread_rng();
     let mut shapes: Vec<Box<Drawable>> = vec![];
-    for _ in 0..shape_count {
-        match shape_type.as_str() {
-            "Circle" => {
-                shapes.push(Box::new(Circle {
-                    origin: Point(rng.gen::<u32>() % width, rng.gen::<u32>() % height),
-                    radius: rng.gen::<u32>() % 250,
-                    colour: *rand::thread_rng().choose(&shape_colours).unwrap()
-                }));
-            }
-            "Rectangle" => {
-                shapes.push(Box::new(Rect {
-                    origin: Point(rng.gen::<u32>() % width, rng.gen::<u32>() % height),
-                    length: rng.gen::<u32>() % 250,
-                    height: rng.gen::<u32>() % 250,
-                    colour: *rand::thread_rng().choose(&shape_colours).unwrap()
-                }));
-            }
-            _ => panic!("Unsupported shape type: {}", shape_type)
-        }
+    match shape_type.as_str() {
+        "Circle" | "Rectangle" => {
+            for _ in 0..shape_count {
+                match shape_type.as_str() {
+                    "Circle" => {
+                        shapes.push(Box::new(Circle {
+                            origin: Point(rng.gen::<u32>() % width, rng.gen::<u32>() % height),
+                            radius: rng.gen::<u32>() % max_radius,
+                            colour: *rand::thread_rng().choose(&shape_colours).unwrap()
+                        }));
+                    }
+                    "Rectangle" => {
+                        shapes.push(Box::new(Rect {
+                            origin: Point(rng.gen::<u32>() % width, rng.gen::<u32>() % height),
+                            length: rng.gen::<u32>() % max_length,
+                            height: rng.gen::<u32>() % max_height,
+                            colour: *rand::thread_rng().choose(&shape_colours).unwrap()
+                        }));
+                    }
+                    _ => panic!("Unsupported shape type: {}", shape_type)
+                }
 
+            }
+        }
+        "Bars" => {
+            let bar_height: u32 = ((height as f64) / (bars as f64)).ceil() as u32; // Used if --vertical-bars is not set
+            let bar_length: u32 = ((width as f64) / (bars as f64)).ceil() as u32; // Used if --vertical-bars is set
+            for i in (1..bars+1).rev() {
+                shapes.push(Box::new(Rect {
+                    origin: Point(0, 0),
+                    length: if vertical_bars {
+                        bar_length * i
+                    } else {
+                        width
+                    },
+                    height: if !vertical_bars {
+                        bar_height * i
+                    } else {
+                        height
+                    },
+                    colour: *rand::thread_rng().choose(&shape_colours).unwrap()
+                }));
+            }
+        }
+        _ => {
+            panic!("Unsupported wallpaper type: {}", shape_type);
+        }
     }
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
         for shape in &shapes {
