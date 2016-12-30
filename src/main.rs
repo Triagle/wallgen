@@ -97,6 +97,7 @@ fn main() {
     let mut colours = String::from("#FFFFFFFF,#FF0000FF,#00FF00FF,#0000FFFF");
     let mut shape_type = String::from("Circle");
     let mut shape_count = 10;
+    let mut out = String::new();
     {
         let mut ap = ArgumentParser::new();
         ap.set_description("Generate a wallpaper with some colours and shapes.");
@@ -112,6 +113,8 @@ fn main() {
             .add_option(&["-n", "--num-shapes"], Store, "Set the number of shapes generated.");
         ap.refer(&mut shape_type)
             .add_option(&["-s", "--shape-type"], Store, "Set the type of shapes generated (Circle, Rectangle). Default is Circle.");
+        ap.refer(&mut out)
+            .add_option(&["-o", "--out"], Store, "Set the output file for the wallpaper");
         ap.parse_args_or_exit();
     }
     let background_colour = colour_parse(background.as_str());
@@ -148,6 +151,8 @@ fn main() {
             shape.draw(pixel, x, y);
         }
     }
-    let ref mut fout = File::create(&Path::new("imageout.png")).unwrap();
-    let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
+    if out != String::new() {
+        let ref mut fout = File::create(&Path::new(&out)).unwrap();
+        let _ = image::ImageRgb8(imgbuf).save(fout, image::PNG);
+    }
 }
