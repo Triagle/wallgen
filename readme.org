@@ -1,0 +1,57 @@
+#+TITLE: Wallgen
+
+Wallgen is a utility for generating abstract wallpapers based on a set of
+colours and shapes.
+
+
+* Getting started
+These instructions describe how to setup wallgen on your computer.
+
+** Prerequisites
+
+You will need the following to begin using wallgen
+
+- Rust :: Rust should be easily installed either by your distribution (if
+          running linux), or from their [[https://www.rust-lang.org/en-US/install.html][website]].
+** Installing
+
+To install go to the cloned directory and type
+
+#+BEGIN_SRC shell
+cargo install
+#+END_SRC
+
+Which will install the executable to =~/.cargo/bin=
+
+You can test this process has worked by running =wallgen -o testimage.png= and see
+the (ugly) image produced by the default settings.
+
+* Usage
+
+The default settings are ugly, but a few options can tweak the sort of image you
+get.
+
+#+BEGIN_EXAMPLE
+Usage:
+    wallgen [OPTIONS]
+
+Generate a wallpaper with some colours and shapes.
+
+optional arguments:
+  -h,--help             show this help message and exit
+  -h,--height HEIGHT    Set the image height.
+  -w,--width WIDTH      Set the image width.
+  -b,--background BACKGROUND
+                        Set the image background colour.
+  -c,--colours COLOURS  Set the image colours (comma separated #RRGGBB values).
+  -n,--num-shapes NUM_SHAPES
+                        Set the number of shapes generated.
+  -s,--shape-type SHAPE_TYPE
+                        Set the type of shapes generated (Circle, Rectangle).
+                        Default is Circle.
+  -o,--out OUT          Set the output file for the wallpaper
+#+END_EXAMPLE
+
+
+As an example I have generated a few images of various sizes, colour schemes and
+shape counts in the =sample= folder of this repository.
