@@ -23,7 +23,7 @@ struct Rect {
 }
 impl Drawable for Rect {
     fn draw(&self, px: &mut image::Rgb<u8>, x: u32, y: u32) -> bool {
-        if x > self.origin.0 && x < self.origin.0 + self.length && y > self.origin.1 && y < self.origin.1 + self.height {
+        if x >= self.origin.0 && x <= self.origin.0 + self.length && y >= self.origin.1 && y <= self.origin.1 + self.height {
             *px = self.colour;
             true
         } else {
