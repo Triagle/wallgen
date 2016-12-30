@@ -2,11 +2,8 @@ extern crate argparse;
 extern crate image;
 extern crate rand;
 
-use std::fmt::Display;
-use std::error::Error;
 use std::fs::File;
 use std::path::Path;
-use std::fmt;
 use rand::Rng;
 use argparse::{ArgumentParser, Store};
 
