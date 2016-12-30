@@ -107,7 +107,7 @@ fn main() {
         ap.refer(&mut background)
             .add_option(&["-b", "--background"], Store, "Set the image background colour.");
         ap.refer(&mut colours)
-            .add_option(&["-c", "--colours"], Store, "Set the image colours (comma separated #RRGGBBAA values).");
+            .add_option(&["-c", "--colours"], Store, "Set the image colours (comma separated #RRGGBB values).");
         ap.refer(&mut shape_count)
             .add_option(&["-n", "--num-shapes"], Store, "Set the number of shapes generated.");
         ap.refer(&mut shape_type)
