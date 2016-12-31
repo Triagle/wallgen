@@ -1,3 +1,4 @@
+extern crate num;
 extern crate argparse;
 extern crate image;
 extern crate rand;
@@ -6,13 +7,52 @@ use std::fs::File;
 use std::path::Path;
 use rand::Rng;
 use argparse::{ArgumentParser, Store, StoreTrue};
+use num::complex::Complex;
 
 // Shapes to draw
 trait Drawable {
-
     fn draw(&self, px: &mut image::Rgb<u8>, x: u32, y: u32) -> bool;
 }
+fn brighten(px: &image::Rgb<u8>, factor: u8) -> image::Rgb<u8> {
+    let white = image::Rgb::<u8> {
+        data: [255, 255, 255]
+    };
+    let factor = factor as f32 / 100.0f32;
+    // Linear interpolation between the colour and full white.
+    // This brighten function is naive, but fast.
+    let brightened: Vec<u16> = px.data.iter().zip(white.data.iter()).map(|(&fv, &tv)| (fv as f32  + ((factor * ((tv as u16 - fv as u16) as f32)) / 15.0f32)) as u16).collect();
+    image::Rgb::<u8> {
+        data: [brightened[0] as u8, brightened[1] as u8, brightened[2] as u8]
+    }
+}
+struct Mandlebrot {
+    max_iterations: u16,
+    scalex: f32,
+    scaley: f32
+}
+impl Drawable for Mandlebrot {
+    fn draw(&self, px: &mut image::Rgb<u8>, x: u32, y: u32) -> bool {
+        let cy = y as f32 * self.scaley - 2.0;
+        let cx = x as f32 * self.scalex - 2.0;
 
+        let mut z = Complex::new(cx, cy);
+        let c = Complex::new(-0.4, 0.6);
+
+        let mut i = 0;
+
+        for t in 0..self.max_iterations {
+            if z.norm() > 2.0 {
+            break
+        }
+        z = z * z + c;
+        i = t;
+    }
+        // Brighten the pixel at (x, y) by a factor of i
+        // and assign in to the pixel at position (x, y)
+        *px = brighten(px, i as u8);
+        true
+    }
+}
 struct Point(u32, u32);
 
 struct Rect {
@@ -99,6 +139,8 @@ fn main() {
     let mut max_radius = 250;
     let mut max_length = 250;
     let mut max_height = 250;
+    let mut max_iterations = 256u16;
+    let mut scale = 4.0f32;
     let mut out = String::new();
     {
         let mut ap = ArgumentParser::new();
@@ -118,7 +160,7 @@ fn main() {
         ap.refer(&mut vertical_bars)
             .add_option(&["--vertical-bars"], StoreTrue, "Set the number of bars (if Bars style is selected)");
         ap.refer(&mut shape_type)
-            .add_option(&["-s", "--style"], Store, "Set the style of wallpaper (Circles, Rectangles). Default is Circles.");
+            .add_option(&["-s", "--style"], Store, "Set the style of wallpaper (Circles, Rectangles, Bars, Mandlebrot). Default is Circles.");
         ap.refer(&mut max_radius)
             .add_option(&["-r", "--radius"], Store, "Set the maximum radius of the circles (if Circles style is selected)");
         ap.refer(&mut max_length)
@@ -127,6 +169,10 @@ fn main() {
             .add_option(&["--rh", "--rect-height"], Store, "Set the maximum height of the rectangles (if Rectangles style is selected)");
         ap.refer(&mut out)
             .add_option(&["-o", "--out"], Store, "Set the output file for the wallpaper");
+        ap.refer(&mut max_iterations)
+            .add_option(&["--max-iterations"], Store, "Set the maximum iterations for the Mandlebrot generator");
+        ap.refer(&mut scale)
+            .add_option(&["--fractal-scale"], Store, "Set the scale for the Mandlebrot generator");
         ap.parse_args_or_exit();
     }
     let background_colour = colour_parse(background.as_str());
@@ -160,6 +206,14 @@ fn main() {
                 }
 
             }
+        }
+        "Mandlebrot" => {
+            shapes.push(Box::new(Mandlebrot {
+                max_iterations: max_iterations,
+                scalex: scale / width as f32,
+                scaley: scale / height as f32
+
+            }));
         }
         "Bars" => {
             let bar_height: u32 = ((height as f64) / (bars as f64)).ceil() as u32; // Used if --vertical-bars is not set
